@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PerformAI - Révélez l'Invisible</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-primary: #0d0d0f;
+            --bg-secondary: #1a1a1f;
+            --accent-rose: #ff6b9d;
+            --accent-violet: #c44569;
+            --accent-gold: #ffd93d;
+            --accent-blue: #6c5ce7;
+            --text-light: #f8f9fa;
+            --text-muted: #a5a5a5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* Custom Cursor - Visible */
+
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent-rose);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            transform: translate(-50%, -50%);
+            background: var(--accent-rose);
+            box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--accent-rose);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: all 0.15s ease;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 107, 157, 0.1);
+        }
+
+        #canvas-3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            background: rgba(13, 13, 15, 0.3);
+            gap: 2rem;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-image {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+            filter: brightness(1.1);
+            transition: all 0.3s ease;
+        }
+
+        .logo-image:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent-rose), var(--accent-violet));
+            transition: width 0.4s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-light);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .btn-audit {
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, var(--accent-rose), var(--accent-violet));
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.3);
+            white-space: nowrap;
+        }
+
+        .btn-audit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 107, 157, 0.5);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 8rem;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 1000px;
+        }
+
+        .hero-subtitle {
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent-rose);
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.3s;
+        }
+
+        .hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(3.5rem, 9vw, 8rem);
+            font-weight: 300;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--text-light), var(--accent-rose), var(--accent-violet));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.5s;
+        }
+
+        .hero-tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            color: var(--text-muted);
+            font-weight: 300;
+            margin-bottom: 2rem;
+            font-style: italic;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.6s;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+            font-weight: 300;
+            max-width: 650px;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.7s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.9s;
+        }
+
+        .btn-primary {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, var(--accent-rose), var(--accent-violet));
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 107, 157, 0.5);
+        }
+
+        .btn-secondary {
+            padding: 1rem 2.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 1px solid var(--text-muted);
+            border-radius: 50px;
+            transition: all 0.4s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        /* Services Section */
+        .services {
+            padding: 8rem 4rem;
+            background: linear-gradient(180deg, transparent, rgba(26, 26, 31, 0.8));
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 300;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-light), var(--accent-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-weight: 300;
+            font-size: 1rem;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: rgba(26, 26, 31, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s ease;
+            position: relative;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-rose), var(--accent-violet), var(--accent-blue));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.2);
+        }
+
+        .service-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .service-subtitle {
+            font-size: 0.9rem;
+            color: var(--accent-rose);
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .service-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Challenges Section */
+        .challenges {
+            padding: 8rem 4rem;
+            background: rgba(26, 26, 31, 0.3);
+        }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: stretch;
+        }
+
+        .challenge-card {
+            background: rgba(26, 26, 31, 0.7);
+            border-radius: 20px;
+            padding: 2.5rem;
+            border: 1px solid rgba(255, 107, 157, 0.1);
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 380px;
+        }
+
+        .challenge-card:hover {
+            border-color: var(--accent-rose);
+            transform: translateY(-5px);
+        }
+
+        .challenge-card h3 {
+            font-size: 1.3rem;
+            color: var(--accent-rose);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .challenge-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .solution {
+            padding: 1.2rem;
+            background: rgba(255, 107, 157, 0.05);
+            border-left: 3px solid var(--accent-rose);
+            border-radius: 5px;
+            margin-top: auto;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .solution strong {
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 0.8rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .solution p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: var(--text-light);
+        }
+
+        /* Stack Section */
+        .stack {
+            padding: 8rem 4rem;
+            background: linear-gradient(180deg, rgba(26, 26, 31, 0.3), rgba(26, 26, 31, 0.8));
+        }
+
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stack-card {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: rgba(26, 26, 31, 0.5);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+        }
+
+        .stack-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-violet);
+            box-shadow: 0 20px 60px rgba(196, 69, 105, 0.2);
+        }
+
+        .stack-emoji {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .stack-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .stack-card .subtitle {
+            color: var(--accent-rose);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .stack-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Case Study Section */
+        .case-study {
+            padding: 8rem 4rem;
+            background: rgba(26, 26, 31, 0.5);
+        }
+
+        .case-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(26, 26, 31, 0.7);
+            border-radius: 30px;
+            padding: 4rem;
+            border: 1px solid rgba(255, 107, 157, 0.1);
+        }
+
+        .case-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .case-header h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            color: var(--accent-rose);
+            margin-bottom: 1rem;
+        }
+
+        .case-header .role {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .case-details {
+            margin-bottom: 3rem;
+        }
+
+        .case-box {
+            background: rgba(255, 107, 157, 0.05);
+            border: 1px solid rgba(255, 107, 157, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .case-box h4 {
+            color: var(--accent-rose);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .case-box p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .case-box strong {
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .result-item {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 107, 157, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 107, 157, 0.2);
+        }
+
+        .result-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            color: var(--accent-rose);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .result-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .result-sublabel {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+        }
+
+        .testimonial {
+            background: rgba(196, 69, 105, 0.1);
+            border-left: 4px solid var(--accent-rose);
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 3rem 0;
+        }
+
+        .testimonial p {
+            font-style: italic;
+            color: var(--text-light);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .testimonial-author {
+            color: var(--accent-rose);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .testimonial-role {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Process Section */
+        .process {
+            padding: 8rem 4rem;
+            background: linear-gradient(180deg, rgba(26, 26, 31, 0.5), rgba(26, 26, 31, 0.9));
+        }
+
+        .process-steps {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 3rem;
+        }
+
+        .process-step {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .step-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 4rem;
+            color: var(--accent-rose);
+            font-weight: 300;
+            opacity: 0.3;
+        }
+
+        .step-content h3 {
+            font-size: 1.8rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-subtitle {
+            color: var(--accent-rose);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-content p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-features {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .feature-tag {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255, 107, 157, 0.3);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .process-step-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent-rose), var(--accent-violet));
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: 8rem 4rem;
+            background: rgba(26, 26, 31, 0.3);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: rgba(26, 26, 31, 0.9);
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 107, 157, 0.3);
+            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.15);
+        }
+
+        .testimonial-quote {
+            font-size: 3rem;
+            color: var(--accent-rose);
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .testimonial-text {
+            color: var(--text-light);
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .profile-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-rose), var(--accent-violet));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border: 2px solid rgba(255, 107, 157, 0.3);
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .testimonial-author-info {
+            flex-grow: 1;
+        }
+
+        .testimonial-author-info h4 {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .testimonial-author-info p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .testimonial-metric {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 107, 157, 0.05);
+            border-left: 3px solid var(--accent-rose);
+            border-radius: 5px;
+        }
+
+        .testimonial-metric-icon {
+            color: var(--accent-rose);
+            font-size: 1.2rem;
+        }
+
+        .testimonial-metric-text {
+            color: var(--accent-rose);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .testimonial-card .profile-image {
+            margin: 0;
+        }
+
+        /* Contact Section */
+        .contact {
+            padding: 8rem 4rem;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(26, 26, 31, 0.3), rgba(26, 26, 31, 0.8));
+        }
+
+        .contact h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-light), var(--accent-rose), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .contact p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .contact-features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0 3rem;
+            flex-wrap: wrap;
+        }
+
+        .contact-feature {
+            color: var(--accent-rose);
+            font-size: 0.95rem;
+        }
+
+        footer {
+            padding: 3rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 300;
+        }
+
+        .footer-tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero {
+                padding: 0 4rem;
+            }
+
+            .services-grid,
+            .challenges-grid,
+            .stack-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .process-step {
+                grid-template-columns: 60px 1fr;
+            }
+
+            .step-number {
+                font-size: 3rem;
+            }
+
+            nav {
+                padding: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .btn-audit {
+                font-size: 0.8rem;
+                padding: 0.6rem 1.5rem;
+            }
+
+            .logo-image {
+                height: 40px;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .cta-group {
+                flex-direction: column;
+            }
+
+            .case-content {
+                padding: 2rem;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas-3d"></canvas>
+
+    <div class="content-wrapper">
+        <nav>
+            <div class="logo">
+                <p>PerformAI</p>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Accueil</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#performance">Performance</a></li>
+                <li><a href="#temoignages">Témoignages</a></li>
+            </ul>
+            <a href="#contact" class="btn-audit">Audit Gratuit</a>
+        </nav>
+
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <div class="hero-subtitle">Agence Spécialisée en Intelligence Artificielle</div>
+                <h1>RÉVÉLEZ L'INVISIBLE</h1>
+                <p class="hero-tagline">« Ce qui se voit, c'est votre impact »</p>
+                <p>
+                    Nous transformons vos processus métiers avec des agents IA sur mesure.
+                    Libérez votre potentiel grâce à l'automatisation intelligente et performante.
+                </p>
+                <div class="cta-group">
+                    <a href="#contact" class="btn-primary">Révéler Mon Invisible</a>
+                    <a href="#services" class="btn-secondary">Découvrir</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="services" id="services">
+            <div class="section-header">
+                <h2>Nos Services</h2>
+                <p>L'invisible qui fait la différence</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">🤖</div>
+                    <h3>Agents IA Sur Mesure</h3>
+                    <p class="service-subtitle">Intelligence silencieuse</p>
+                    <p>
+                        Des agents IA personnalisés qui automatisent vos tâches répétitives et
+                        libèrent vos équipes pour se concentrer sur l'essentiel.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">⚡</div>
+                    <h3>Force Tranquille</h3>
+                    <p class="service-subtitle">Automatisation libérée</p>
+                    <p>
+                        Workflows automatisés qui fonctionnent en arrière-plan,
+                        transformant votre productivité sans bruit ni interruption.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">🚀</div>
+                    <h3>Performance Silencieuse</h3>
+                    <p class="service-subtitle">Résultats explosifs</p>
+                    <p>
+                        Des résultats mesurables qui parlent d'eux-mêmes. ROI moyen de 400%
+                        et satisfaction client de 100% sur 3 mois.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="challenges" id="challenges">
+            <div class="section-header">
+                <h2>Vos Défis Quotidiens</h2>
+                <p>Ces défis qui vous épuisent</p>
+            </div>
+
+            <div class="challenges-grid">
+                <div class="challenge-card">
+                    <h3>Temps Perdu en Tâches Répétitives</h3>
+                    <p>
+                        Vous passez 3-5h/jour sur des tâches manuelles qui pourraient être automatisées.
+                        Burnout garanti et moins de temps pour la stratégie.
+                    </p>
+                    <div class="solution">
+                        <strong>Notre Solution :</strong>
+                        <p>Agents IA qui automatisent 80% de ces tâches</p>
+                    </div>
+                </div>
+
+                <div class="challenge-card">
+                    <h3>Données Éparpillées</h3>
+                    <p>
+                        Informations dispersées dans 10+ outils différents. Décisions lentes,
+                        erreurs fréquentes et frustration quotidienne.
+                    </p>
+                    <div class="solution">
+                        <strong>Notre Solution :</strong>
+                        <p>Centralisation intelligente avec agents IA</p>
+                    </div>
+                </div>
+
+                <div class="challenge-card">
+                    <h3>Équipe Surchargée</h3>
+                    <p>
+                        Vos collaborateurs croulent sous les processus manuels. Turnover élevé
+                        et baisse de productivité constante.
+                    </p>
+                    <div class="solution">
+                        <strong>Notre Solution :</strong>
+                        <p>Libération des talents pour l'essentiel</p>
+                    </div>
+                </div>
+
+                <div class="challenge-card">
+                    <h3>Croissance Bloquée</h3>
+                    <p>
+                        Impossible de scaler sans recruter massivement. Stagnation pendant
+                        que la concurrence vous dépasse.
+                    </p>
+                    <div class="solution">
+                        <strong>Notre Solution :</strong>
+                        <p>Automatisation qui suit votre croissance</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="stack" id="stack">
+            <div class="section-header">
+                <h2>Stack Technologique</h2>
+                <p>Plateformes + Agents IA — L'automatisation, c'est votre arme secrète</p>
+            </div>
+
+            <div class="stack-grid">
+                <div class="stack-card">
+                    <span class="stack-emoji">🧠</span>
+                    <h3>n8n + Agents IA</h3>
+                    <p class="subtitle">Intelligence sur mesure</p>
+                    <p>Performance silencieuse avec des workflows intelligents adaptés à vos besoins spécifiques.</p>
+                </div>
+
+                <div class="stack-card">
+                    <span class="stack-emoji">🔧</span>
+                    <h3>Make + IA</h3>
+                    <p class="subtitle">Workflows automatisés</p>
+                    <p>Automatisation visible et efficace pour optimiser chaque processus métier.</p>
+                </div>
+
+                <div class="stack-card">
+                    <span class="stack-emoji">🎓</span>
+                    <h3>Formation IA</h3>
+                    <p class="subtitle">Différents niveaux</p>
+                    <p>Formez-vous aux outils du marché et maîtrisez l'IA dans votre quotidien.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="case-study" id="performance">
+            <div class="section-header">
+                <h2>Performance Agence</h2>
+                <p>Cas d'étude phare</p>
+            </div>
+
+            <div class="case-content">
+                <div class="case-header">
+                    <div class="profile-image">
+                        <!-- Remplacez le src ci-dessous par votre image -->
+                        <img src="image/rudy morel.jpeg" alt="Rudy MOREL"
+                            onerror="this.style.display='none'; this.parentElement.innerHTML='🏋️';">
+                    </div>
+                    <h3>Rudy MOREL</h3>
+                    <p class="role">CEO Olikano Fit — Coach Sportif</p>
+                </div>
+
+                <div class="case-details">
+                    <div class="case-box">
+                        <h4>🎯 Défi</h4>
+                        <p>
+                            Coach sportif débordé par la création de contenu pour LinkedIn et Instagram,
+                            perdant 3h/jour sur des tâches répétitives.
+                        </p>
+                    </div>
+
+                    <div class="case-box">
+                        <h4>💡 Solution</h4>
+                        <p>
+                            Déploiement de 2 agents IA spécialisés avec génération d'images
+                            automatisée et publication programmée.
+                        </p>
+                    </div>
+
+                    <div class="case-box">
+                        <h4>✨ Résultat</h4>
+                        <p>
+                            Automatisation complète du processus de création et publication de contenu.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-number">3 MOIS</div>
+                        <div class="result-label">Satisfaction Totale</div>
+                        <div class="result-sublabel">Suivi continu garanti</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-number">100%</div>
+                        <div class="result-label">Automatisation</div>
+                        <div class="result-sublabel">Posts LinkedIn + Instagram</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-number">2 AGENTS</div>
+                        <div class="result-label">IA Déployés</div>
+                        <div class="result-sublabel">Création + Publication</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-number">3H/JOUR</div>
+                        <div class="result-label">Temps Libéré</div>
+                        <div class="result-sublabel">Focus sur le business</div>
+                    </div>
+                </div>
+
+                <div class="testimonial">
+                    <p>
+                        "Ça fait 3 mois maintenant que j'ai fait appel aux services de Mattis et Tao et je suis
+                        amplement satisfait ! Ils sont très réactifs, à l'écoute et très professionnels, j'ai gagné
+                        un temps considérable sur mes publications ainsi que amélioration sur la maîtrise de ChatGPT
+                        grâce à leur formation ! Je recommande les yeux fermés 👌"
+                    </p>
+                    <p class="testimonial-author">Rudy MOREL</p>
+                    <p class="testimonial-role">Coach Sportif - CEO Olikano Fit</p>
+                </div>
+
+                <div class="case-details">
+                    <div class="case-box"
+                        style="text-align: center; background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(196, 69, 105, 0.1)); border: 2px solid rgba(255, 107, 157, 0.3);">
+                        <h4>🚀 Processus Révolutionnaire</h4>
+                        <p style="font-size: 1.2rem; color: var(--text-light); margin: 1.5rem 0;">
+                            « Je parle à Telegram, mes agents créent, je supervise et ils postent tout seuls ! »
+                        </p>
+                        <p style="color: var(--accent-rose); margin-bottom: 2rem; font-style: italic;">
+                            L'outil le plus simple du marché
+                        </p>
+
+                        <div class="step-features" style="justify-content: center;">
+                            <div class="feature-tag">
+                                <span class="process-step-icon">1</span>
+                                Communication — Message Telegram
+                            </div>
+                            <div class="feature-tag">
+                                <span class="process-step-icon">2</span>
+                                Création IA — Agents génèrent
+                            </div>
+                            <div class="feature-tag">
+                                <span class="process-step-icon">3</span>
+                                Supervision — Validation rapide
+                            </div>
+                            <div class="feature-tag">
+                                <span class="process-step-icon">4</span>
+                                Publication — Automatique
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="process" id="process">
+            <div class="section-header">
+                <h2>Notre Processus</h2>
+                <p>De l'audit à la performance — Méthodologie éprouvée en 3 étapes</p>
+            </div>
+
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-number">01</div>
+                    <div class="step-content">
+                        <h3>Audit Gratuit</h3>
+                        <p class="step-subtitle">Découverte Approfondie</p>
+                        <p>
+                            Analyse complète de votre environnement technologique, identification des processus
+                            manuels et évaluation des opportunités d'automatisation.
+                        </p>
+                        <div class="step-features">
+                            <span class="feature-tag">Audit de votre stack</span>
+                            <span class="feature-tag">Analyse des workflows</span>
+                            <span class="feature-tag">Identification des gains</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">02</div>
+                    <div class="step-content">
+                        <h3>Solutions Personnalisées</h3>
+                        <p class="step-subtitle">Conception Sur Mesure</p>
+                        <p>
+                            Élaboration d'agents IA adaptés à vos processus spécifiques, architecture technique
+                            et roadmap de déploiement personnalisée.
+                        </p>
+                        <div class="step-features">
+                            <span class="feature-tag">Agents IA sur mesure</span>
+                            <span class="feature-tag">Architecture technique</span>
+                            <span class="feature-tag">Roadmap détaillée</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">03</div>
+                    <div class="step-content">
+                        <h3>Implémentation & Suivi</h3>
+                        <p class="step-subtitle">Déploiement Sécurisé</p>
+                        <p>
+                            Mise en œuvre progressive, formation de vos équipes, maintenance continue et
+                            optimisation permanente de vos agents IA.
+                        </p>
+                        <div class="step-features">
+                            <span class="feature-tag">Déploiement progressif</span>
+                            <span class="feature-tag">Formation équipes</span>
+                            <span class="feature-tag">Maintenance continue</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="services" style="background: rgba(26, 26, 31, 0.5); padding: 8rem 4rem;">
+            <div class="section-header">
+                <h2>Pourquoi Nous</h2>
+                <p>Nos valeurs fondamentales — Relationnel client au cœur de notre expertise</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">💎</div>
+                    <h3>Relationnel Client Prioritaire</h3>
+                    <p class="service-subtitle">Votre réussite, notre engagement personnel</p>
+                    <p>
+                        Toujours à l'écoute, toujours disponible en cas de problème.
+                        Votre satisfaction est notre obsession quotidienne.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">📈</div>
+                    <h3>Volonté d'Amélioration Continue</h3>
+                    <p class="service-subtitle">Chaque jour, nous devenons meilleurs pour vous</p>
+                    <p>
+                        Nous évoluons constamment pour vous offrir les meilleures solutions.
+                        Innovation et perfectionnement permanent.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">🎯</div>
+                    <h3>Experts Outils Low-Code & IA</h3>
+                    <p class="service-subtitle">L'expertise technique au service de votre vision</p>
+                    <p>
+                        Maîtrise complète des plateformes n8n, Make et création d'agents IA
+                        conversationnels sur mesure.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">⚡</div>
+                    <h3>Disponibilité Garantie</h3>
+                    <p class="service-subtitle">Jamais seul face aux défis</p>
+                    <p>
+                        Support réactif et accompagnement personnalisé. Nous sommes là quand
+                        vous en avez besoin.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">🔮</div>
+                    <h3>Solutions Sur Mesure</h3>
+                    <p class="service-subtitle">Votre unicité, notre spécialité</p>
+                    <p>
+                        Chaque projet est unique. Nous créons des agents IA adaptés à vos
+                        besoins spécifiques.
+                    </p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">📊</div>
+                    <h3>Résultats Mesurables</h3>
+                    <p class="service-subtitle">Des promesses tenues, des résultats concrets</p>
+                    <p>
+                        Performance prouvée avec ROI moyen de 400% et satisfaction client de
+                        100% sur 3 mois.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="testimonials" id="temoignages">
+            <div class="section-header">
+                <h2>Retours Clients</h2>
+                <p>Agents IA qui transforment — Résultats mesurables, performance explosive</p>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <p class="testimonial-text">
+                        L'automatisation de ma facturation a révolutionné mon entreprise. Les factures se créent
+                        automatiquement selon mes tarifs et prestations, puis sont envoyées directement à mon
+                        comptable chaque fin de mois. Plus de saisie manuelle, plus d'oublis ! Je peux me concentrer
+                        sur le développement de EURL Frêne au lieu de perdre du temps sur l'administratif.
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="profile-image">
+                            <!-- Remplacez le src ci-dessous par votre image -->
+                            <img src="image/julien balazuc.jpeg" alt="Julien BALAZUC"
+                                onerror="this.style.display='none'; this.parentElement.innerHTML='👨‍💼';">
+                        </div>
+                        <div class="testimonial-author-info">
+                            <h4>Julien BALAZUC</h4>
+                            <p>CEO - EURL Frêne</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-metric">
+                        <span class="testimonial-metric-icon">📈</span>
+                        <span class="testimonial-metric-text">100% automatisé</span>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <p class="testimonial-text">
+                        Ça fait 3 mois maintenant que j'ai fait appel aux services de Mattis et Tao et je suis
+                        amplement satisfait ! Ils sont très réactifs, à l'écoute et très professionnels, j'ai gagné
+                        un temps considérable sur mes publications ainsi que amélioration sur la maîtrise de ChatGPT
+                        grâce à leur formation ! Je recommande les yeux fermés 👌
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="profile-image">
+                            <!-- Remplacez le src ci-dessous par votre image -->
+                            <img src="image/rudy morel.jpeg" alt="Rudy MOREL"
+                                onerror="this.style.display='none'; this.parentElement.innerHTML='🏋️';">
+                        </div>
+                        <div class="testimonial-author-info">
+                            <h4>Rudy MOREL</h4>
+                            <p>Coach Sportif - CEO Olikano Fit</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-metric">
+                        <span class="testimonial-metric-icon">📈</span>
+                        <span class="testimonial-metric-text">3 mois de satisfaction totale</span>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <p class="testimonial-text">
+                        L'agent IA analyse automatiquement les données du marché immobilier et génère des rapports
+                        personnalisés pour chaque prospect. Nos commerciaux ont maintenant des arguments chiffrés en
+                        temps réel. Le taux de conversion a explosé et nos clients nous font davantage confiance
+                        grâce à ces données précises.
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="profile-image">
+                            <!-- Remplacez le src ci-dessous par votre image -->
+                            <img src="image/catherine morgane.avif" alt="Catherine BERNARD"
+                                onerror="this.style.display='none'; this.parentElement.innerHTML='👩‍💼';">
+                        </div>
+                        <div class="testimonial-author-info">
+                            <h4>Catherine BERNARD</h4>
+                            <p>Directrice - Agence Immobilière Premium</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-metric">
+                        <span class="testimonial-metric-icon">📈</span>
+                        <span class="testimonial-metric-text">+35% de conversions</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="contact" id="contact">
+            <h2>Analysons Votre Écosystème</h2>
+            <p>Pour révéler votre invisible</p>
+            <div class="contact-features">
+                <span class="contact-feature">✓ Audit de votre stack</span>
+                <span class="contact-feature">✓ Agents IA personnalisés</span>
+                <span class="contact-feature">✓ Accompagnement complet</span>
+            </div>
+            <div class="cta-group" style="justify-content: center;">
+                <a href="/cdn-cgi/l/email-protection#4e2d21203a2f2d3a0e3e2b3c28213c232f27602d2123"
+                    class="btn-primary">Audit Gratuit</a>
+            </div>
+        </section>
+
+        <footer>
+            <p class="footer-tagline">PerformAI — RÉVÉLEZ L'INVISIBLE</p>
+            <p>"Ce qui se voit, c'est votre impact"</p>
+            <p style="margin-top: 1rem;">© 2024 PerformAI. Tous droits réservés.</p>
+        </footer>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorFollower = document.querySelector('.cursor-follower');
+
+        let mouseX = 0, mouseY = 0;
+        let followerX = 0, followerY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursor.style.left = mouseX + 'px';
+            cursor.style.top = mouseY + 'px';
+        });
+
+        function animateFollower() {
+            followerX += (mouseX - followerX) * 0.1;
+            followerY += (mouseY - followerY) * 0.1;
+            cursorFollower.style.left = followerX + 'px';
+            cursorFollower.style.top = followerY + 'px';
+            requestAnimationFrame(animateFollower);
+        }
+        animateFollower();
+
+        // Three.js Scene
+        const canvas = document.getElementById('canvas-3d');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        camera.position.z = 5;
+
+        // Create flowing organic shapes
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xff6b9d,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15
+        });
+
+        const spheres = [];
+        for (let i = 0; i < 5; i++) {
+            const sphere = new THREE.Mesh(geometry, material.clone());
+            sphere.position.set(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 5 - 5
+            );
+            sphere.scale.set(
+                Math.random() * 2 + 0.5,
+                Math.random() * 2 + 0.5,
+                Math.random() * 2 + 0.5
+            );
+            scene.add(sphere);
+            spheres.push(sphere);
+        }
+
+        // Add ambient particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1000;
+        const positions = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 20;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const particlesMaterial = new THREE.PointsMaterial({
+            color: 0xff6b9d,
+            size: 0.03,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
+
+        // Animation
+        const clock = new THREE.Clock();
+        let scrollY = 0;
+
+        window.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // Animate spheres with organic motion
+            spheres.forEach((sphere, index) => {
+                sphere.rotation.x = elapsedTime * 0.1 * (index + 1);
+                sphere.rotation.y = elapsedTime * 0.15 * (index + 1);
+
+                sphere.position.y = Math.sin(elapsedTime * 0.5 + index) * 2;
+                sphere.position.x = Math.cos(elapsedTime * 0.3 + index) * 3;
+
+                // Pulsing effect
+                const scale = 0.5 + Math.sin(elapsedTime * 2 + index) * 0.3;
+                sphere.scale.set(scale, scale, scale);
+            });
+
+            // Rotate particles
+            particles.rotation.y = elapsedTime * 0.05;
+            particles.rotation.x = Math.sin(elapsedTime * 0.1) * 0.2;
+
+            // Mouse interaction
+            camera.position.x += ((mouseX / window.innerWidth) * 2 - 1) * 0.5 - camera.position.x * 0.05;
+            camera.position.y += (-(mouseY / window.innerHeight) * 2 + 1) * 0.5 - camera.position.y * 0.05;
+
+            // Scroll effect
+            camera.position.z = 5 + scrollY * 0.001;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Responsive
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 1s ease forwards';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.service-card, .challenge-card, .stack-card, .testimonial-card, .process-step').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+
+</html>
